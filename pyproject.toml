@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ecommerce-price-validation-selenium"
-version = "0.1.0"
-description = "Rebuilt, sanitized price validation demonstration using local Selenium fixtures"
+version = "0.2.0"
+description = "Sanitized regular-price and XG checking, stock intersection and selective Selenium correction"
 requires-python = ">=3.11"
 dependencies = ["selenium==4.47.0"]
 

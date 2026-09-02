@@ -1,0 +1,8 @@
+body {font: 17px system-ui; max-width: 980px; margin: 32px auto; color: #142d3f; background: #f4f8fc}
+header, main, nav {background: white; padding: 20px; margin-bottom: 14px; border-radius: 12px}
+button {padding: 10px 16px; margin: 8px; cursor: pointer; background: #154d76; color: white; border: 0; border-radius: 6px}
+input {padding: 8px; max-width: 140px; margin: 5px}
+table {border-collapse: collapse; margin: 16px 0}
+th, td {padding: 8px; border: 1px solid #b5ccde}
+fieldset {margin: 14px 0}
+[hidden] {display: none !important}

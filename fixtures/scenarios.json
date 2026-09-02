@@ -1,0 +1,69 @@
+{
+  "DEMO-002": {
+    "xg": {
+      "atacado": {
+        "Ciano|T1": "39.00"
+      }
+    }
+  },
+  "DEMO-003": {
+    "xg": {
+      "varejo": {
+        "Ambar|T2": "71.00"
+      }
+    },
+    "stock": {
+      "Ambar|T2": 0
+    }
+  },
+  "DEMO-004": {
+    "xg": {
+      "atacado": {
+        "Ciano|T1": null,
+        "Ciano|T2": null,
+        "Ambar|T1": null,
+        "Ambar|T2": null
+      },
+      "varejo": {
+        "Ciano|T1": null,
+        "Ciano|T2": null,
+        "Ambar|T1": null,
+        "Ambar|T2": null
+      }
+    }
+  },
+  "DEMO-005": {
+    "regular": {
+      "retail_sale": "70.00"
+    }
+  },
+  "DEMO-006": {
+    "regular": {
+      "wholesale_sale": "ilegivel"
+    }
+  },
+  "DEMO-007": {
+    "xg": {
+      "atacado": {
+        "Ciano|T2": "40.00"
+      },
+      "varejo": {
+        "Ambar|T1": "73.00"
+      }
+    }
+  },
+  "DEMO-008": {
+    "xg": {
+      "atacado": {
+        "Ciano|T1": null
+      }
+    }
+  },
+  "DEMO-009": {
+    "xg": {
+      "varejo": {
+        "Ciano|T1": "ilegivel"
+      }
+    }
+  }
+}
