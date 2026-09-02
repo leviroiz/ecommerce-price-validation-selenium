@@ -22,6 +22,12 @@ class Journal:
         row = self.db.execute("SELECT before_json, target_json, status FROM operations WHERE key=?", (key,)).fetchone()
         return (json.loads(row[0]), json.loads(row[1]), row[2]) if row else None
 
+    def has_conflicting_pending(self, ref, key):
+        return self.db.execute(
+            "SELECT 1 FROM operations WHERE reference=? AND status='pending' AND key<>? LIMIT 1",
+            (ref, key),
+        ).fetchone() is not None
+
     def pending(self, key, ref, before, target):
         with self.db:
             self.db.execute("INSERT INTO operations VALUES (?, ?, ?, ?, 'pending')",

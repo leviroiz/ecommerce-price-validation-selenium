@@ -37,6 +37,9 @@ def test_full_245_regular_and_xg_dom(admin, expected):
     assert sum(row["status"] == "OK" for row in regular) == 243
     assert regular[4]["status"] == "DIVERGENTE"
     assert regular[5]["status"] == "ERRO_LEITURA"
+    for field, value in expected["DEMO-006"]["regular"].items():
+        assert regular[5][field + "_actual"] == ("ilegivel" if field == "wholesale_sale" else value)
+        assert regular[5][field + "_read_status"] == ("ILEGIVEL" if field == "wholesale_sale" else "LIDO")
     xg = check_xg(page, expected, lambda _: None)
     assert len(xg) == 490
     assert sum(row["status"] == "DIVERGENTE" for row in xg) == 5
@@ -166,6 +169,12 @@ def test_interruption_after_real_save_recovers(admin, expected, tmp_path, monkey
     page.reload()
     journal = Journal(path)
     try:
+        changed = deepcopy(expected)
+        changed["DEMO-002"]["xg"]["atacado"]["Ciano|T1"] = "55.55"
+        with pytest.raises(UnsafeState, match="different target; manual review"):
+            correct_xg(page, changed, {"DEMO-002"}, journal, True, lambda _: None)
+        assert store.data["DEMO-002"]["revision"] == 1
+        assert journal.db.execute("SELECT status FROM operations").fetchall() == [("pending",)]
         result = correct_xg(page, expected, {"DEMO-002"}, journal, True, lambda _: None)
         assert result[0]["status"] == "JA_CORRETO"
         assert store.data["DEMO-002"]["revision"] == 1

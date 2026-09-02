@@ -64,7 +64,7 @@ def main():
                     rows = check_regular(page, expected)
                     fields = ["reference", "status"]
                     for field in FIELDS:
-                        fields += [field + "_expected", field + "_actual"]
+                        fields += [field + "_expected", field + "_actual", field + "_read_status"]
                     write_csv(args.output / "regular.csv", rows, fields)
                 if args.robot in ("xg", "stock", "all"):
                     rows = check_xg(page, expected)

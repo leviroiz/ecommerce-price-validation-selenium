@@ -34,6 +34,8 @@ def correct_xg(page, expected, approved, journal, apply=False, emit=print):
             if status == "SEM_VALORES":
                 raise UnsafeState("Empty XG side requires manual review")
         key = fingerprint({"reference": ref, "regular": target["regular"], "xg": target["xg"]})
+        if journal.has_conflicting_pending(ref, key):
+            raise UnsafeState("Pending operation has a different target; manual review required")
         previous = journal.get(key)
         if previous:
             old, intended, state = previous

@@ -140,3 +140,41 @@ def test_run_lock_released(tmp_path):
                 pass
     with exclusive_run(tmp_path):
         pass
+
+
+@pytest.mark.parametrize("point", ["before", "after"])
+@pytest.mark.parametrize("apply", [False, True])
+@pytest.mark.parametrize("matches_current", [False, True])
+def test_pending_target_change_blocks_and_original_resumes(fake, expected, tmp_path, point, apply, matches_current):
+    path = tmp_path / "audit.sqlite"
+    first = Journal(path)
+    fake.fail = point
+    try:
+        with pytest.raises(RuntimeError):
+            run(fake, expected, first, apply=True)
+    finally:
+        first.close()
+    fake.fail = None
+    changed = deepcopy(expected)
+    if matches_current:
+        changed["DEMO-002"]["xg"] = deepcopy(fake.data["DEMO-002"]["xg"])
+        if point == "after":
+            changed["DEMO-002"]["xg"]["atacado"]["Ciano|T1"] = "55.55"
+            fake.data["DEMO-002"]["xg"] = deepcopy(changed["DEMO-002"]["xg"])
+    else:
+        changed["DEMO-002"]["xg"]["atacado"]["Ciano|T1"] = "55.55"
+    before = deepcopy(fake.data)
+    writes = fake.writes
+    second = Journal(path)
+    try:
+        with pytest.raises(UnsafeState, match="different target; manual review"):
+            run(fake, changed, second, apply=apply)
+        assert fake.data == before and fake.writes == writes
+        assert second.db.execute("SELECT reference, status FROM operations").fetchall() == [("DEMO-002", "pending")]
+        if point == "after" and matches_current:
+            fake.data["DEMO-002"]["xg"] = deepcopy(expected["DEMO-002"]["xg"])
+        run(fake, expected, second, apply=True)
+        assert fake.writes == 2
+        assert second.db.execute("SELECT COUNT(*) FROM operations WHERE status='verified'").fetchone()[0] == 2
+    finally:
+        second.close()

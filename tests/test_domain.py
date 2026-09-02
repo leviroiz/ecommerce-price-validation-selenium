@@ -91,3 +91,44 @@ def test_unreadable_other_side_does_not_claim_stock_clear():
 def test_read_failure_does_not_abort_remaining(fake, expected):
     del fake.data["DEMO-001"]
     assert check_regular(fake, dict(list(expected.items())[:2]), lambda _: None)[1]["status"] == "OK"
+
+
+@pytest.mark.parametrize("field", ["wholesale_list", "wholesale_sale", "retail_list", "retail_sale"])
+def test_regular_preserves_readable_evidence(fake, expected, tmp_path, field):
+    import csv
+    from price_demo.reports.csv_report import write_csv
+    ref = "DEMO-006"
+    fake.data[ref]["regular"] = dict(expected[ref]["regular"])
+    fake.data[ref]["regular"][field] = "=ilegivel"
+    row = check_regular(fake, {ref: expected[ref]}, lambda _: None)[0]
+    assert row["status"] == "ERRO_LEITURA"
+    for key, value in expected[ref]["regular"].items():
+        assert row[key + "_expected"] == value
+        assert row[key + "_actual"] == ("=ilegivel" if key == field else value)
+        assert row[key + "_read_status"] == ("ILEGIVEL" if key == field else "LIDO")
+    path = tmp_path / "regular.csv"
+    write_csv(path, [row], list(row))
+    with path.open(encoding="utf-8", newline="") as stream:
+        saved = next(csv.DictReader(stream))
+    assert saved[field + "_actual"] == "'=ilegivel"
+
+
+def test_regular_failed_reference_does_not_reuse_previous_values(fake, expected):
+    del fake.data["DEMO-002"]
+    rows = check_regular(fake, {ref: expected[ref] for ref in ("DEMO-001", "DEMO-002", "DEMO-003")}, lambda _: None)
+    assert [row["status"] for row in rows] == ["OK", "ERRO_LEITURA", "OK"]
+    for field in expected["DEMO-002"]["regular"]:
+        assert rows[1][field + "_actual"] == ""
+        assert rows[1][field + "_read_status"] == "NAO_LIDO"
+
+
+def test_fixture_prices_distinguish_references(fake, expected):
+    from price_demo.domain.fixtures import expected_catalog
+    assert expected == expected_catalog()
+    assert len(expected) == 245
+    for field in expected["DEMO-001"]["regular"]:
+        assert len({item["regular"][field] for item in expected.values()}) == 245
+    fake.data["DEMO-012"]["regular"] = dict(expected["DEMO-013"]["regular"])
+    assert check_regular(fake, {"DEMO-012": expected["DEMO-012"]}, lambda _: None)[0]["status"] == "DIVERGENTE"
+    fake.data["DEMO-012"]["xg"] = expected["DEMO-013"]["xg"]
+    assert [row["status"] for row in check_xg(fake, {"DEMO-012": expected["DEMO-012"]}, lambda _: None)] == ["DIVERGENTE"] * 2
