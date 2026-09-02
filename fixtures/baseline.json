@@ -1,0 +1,8 @@
+{
+  "SYN-001-retail": {"before":"120.00","sale":"100.00","cost":"60.00","grid":[["azul-demo","M"],["azul-demo","XG"]]},
+  "SYN-001-wholesale": {"before":"90.00","sale":"80.00","cost":"50.00","grid":[["azul-demo","M"],["azul-demo","XG"]]},
+  "SYN-002-retail": {"before":"120.00","sale":"100.00","cost":"60.00","grid":[["azul-demo","M"],["azul-demo","XG"]]},
+  "SYN-003-retail": {"before":"120.00","sale":"100.00","cost":"60.00","grid":[["azul-demo","M"],["azul-demo","XG"]]},
+  "SYN-004-wholesale": {"before":"90.00","sale":"80.00","cost":"50.00","grid":[["azul-demo","M"],["azul-demo","XG"]]},
+  "SYN-005-retail": {"before":"120.00","sale":"100.00","cost":"60.00","grid":[["azul-demo","M"],["azul-demo","XG"]]}
+}
