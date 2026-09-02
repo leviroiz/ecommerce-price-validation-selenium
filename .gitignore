@@ -5,6 +5,7 @@ __pycache__/
 .pytest_cache/
 build/
 dist/
+# Generated output belongs here; arbitrary --output paths are not automatically ignored.
 /reports/
 se-metadata.json
 .env*

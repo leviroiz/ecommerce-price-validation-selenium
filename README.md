@@ -2,6 +2,8 @@
 
 Reconstrução sanitizada da arquitetura de robôs de e-commerce: conferência de preços normais, leitura de grades XG por cor/tamanho, cruzamento com estoque e correção seletiva em sete etapas.
 
+O problema operacional é identificar divergências entre os preços esperados e o painel, analisar grades e estoque e corrigir seletivamente.
+
 **Este repositório não é o código de produção.** Não integra um painel comercial. Dados, produtos, interface, HTML, CSS e seletores foram criados do zero. A fidelidade pretendida é de fluxo e comportamento, não de aparência ou implementação interna.
 
 ## Contexto real
@@ -19,7 +21,7 @@ Os números não são resultados desta demo, garantia geral, taxa de sucesso, ne
 
 ## Fluxos reconstruídos
 
-**A — Conferência normal:** abrir Gerenciar Produtos → Preços → pesquisar cada referência → ler quatro campos → comparar com CSV esperado → emitir OK, DIVERGENTE ou ERRO_LEITURA. O CSV preserva os valores observados e esperados por campo.
+**A — Conferência normal:** abrir Gerenciar Produtos → Preços → pesquisar cada referência → ler quatro campos → comparar com CSV esperado → emitir OK, DIVERGENTE ou ERRO_LEITURA. O CSV preserva os valores observados e esperados por campo, inclusive o texto ilegível, com estado de leitura LIDO, VAZIO, ILEGIVEL ou NAO_LIDO. Uma falha de interpretação mantém os outros valores e marca a referência como ERRO_LEITURA; uma falha anterior à leitura não reaproveita valores da referência anterior.
 
 **B — Conferência XG:** pesquisar referência, alternar entre atacado e varejo, ler a matriz cor × tamanho e registrar cada lado separadamente. Cada lado recebe OK, DIVERGENTE, SEM_VALORES ou ERRO_LEITURA e a lista de células divergentes. Um lado vazio não é tratado como correto.
 
@@ -70,7 +72,7 @@ Selenium controla a interface por DOM. A aplicação fictícia usa HTTP exclusiv
 
 - Quatro campos conceituais: atacado de/por e varejo de/por. Os nomes são novos; não afirmam o mapeamento exato de campos internos.
 - Duas cores inventadas e dois tamanhos fictícios T1/T2.
-- A fixture esperada contém 245 referências DEMO-001 a DEMO-245. XG tem dois lados por referência: 490 linhas de conferência.
+- A fixture esperada contém 245 referências DEMO-001 a DEMO-245. Cada referência tem quatro preços distintos dos de outras referências, gerados deterministicamente em centavos: para o índice i de 1 a 245, 4200+17i, 3600+13i, 7400+23i e 6800+19i. XG tem dois lados por referência: 490 linhas de conferência.
 - O preço XG esperado de cada lado vem do campo “por” da fixture, aplicado às quatro células. Essa simplificação é da demo, não uma afirmação sobre regras comerciais reais.
 - Lote aplica valores absolutos esperados, sem reproduzir um mecanismo interno ou fórmula percentual do painel observado.
 - Comparação monetária exata com Decimal; sem tolerância oculta.
@@ -107,7 +109,9 @@ price-demo all --limit 12 --output reports/ensaio
 
 `--apply` é a autorização de escrita **na demo local**, nunca em produção. O programa não aceita URL externa nem credenciais. Chrome funciona sem janela; Selenium Manager pode precisar de rede para localizar/baixar um driver compatível. Os dados do painel não saem da máquina.
 
-Para começar outro ensaio, use outro diretório `--output`. Para retomar, mantenha o mesmo diretório, com `state.json` e `audit.sqlite` juntos. Não apague o diário isoladamente para contornar um bloqueio.
+Grave saídas em `reports/` (ignorado na raiz do repositório) ou em outro caminho explicitamente ignorado. Um `--output` arbitrário não fica automaticamente fora do Git; confira com `git check-ignore` e `git status` antes de adicionar arquivos.
+
+Para começar outro ensaio, use outro diretório `--output` sob `reports/`. Para retomar, mantenha o mesmo diretório, com `state.json` e `audit.sqlite` juntos. Não apague o diário isoladamente para contornar um bloqueio. A diversificação das fixtures altera os alvos: estados de ensaios da versão anterior não são migrados automaticamente. Preserve esses ensaios e inicie a nova fixture em outro diretório sob `reports/`.
 
 ## Saída sintética
 
@@ -137,7 +141,7 @@ No estado inicial **sintético**, conferência normal: 243 OK, 1 DIVERGENTE e 1 
 
 ## Relatórios e retomada
 
-- `regular.csv`: uma linha por referência e os quatro pares observado/esperado.
+- `regular.csv`: uma linha por referência e os quatro pares observado/esperado, com estado de leitura por campo.
 - `xg.csv`: uma linha por referência/lado; células e contagem de divergências.
 - `stock.csv`: uma linha por referência divergente e contagens de variantes.
 - `simulation.csv` / `corrections.csv`: resultados da última execução concluída daquela modalidade.
@@ -146,7 +150,7 @@ No estado inicial **sintético**, conferência normal: 243 OK, 1 DIVERGENTE e 1 
 
 Relatórios não são anexados repetidamente. Se houver interrupção, um CSV anterior pode permanecer; o diário é a fonte de retomada do corretor. Conferências reiniciam a leitura e substituem o snapshot somente ao concluir. Não há checkpoint por linha de conferência.
 
-Uma interrupção depois de salvar e antes de confirmar no diário é reconciliada por releitura. Se o estado coincidir com a intenção e a revisão esperada, a operação é confirmada sem novo save. Alterações inesperadas exigem revisão manual. Há bloqueio de execução concorrente por diretório de saída.
+Uma interrupção depois de salvar e antes de confirmar no diário é reconciliada por releitura. Se o estado coincidir com a intenção e a revisão esperada, a operação é confirmada sem novo save. Alterações inesperadas exigem revisão manual. Uma operação pending para a mesma referência bloqueia automaticamente outro alvo, inclusive em simulação e quando o painel já coincide com o novo alvo. Para retomar, restaure o alvo original e reconcilie a intenção; para um novo ensaio após revisão, preserve o par estado/diário anterior e use outro diretório sob `reports/`. Não há comando para descartar uma intenção pendente. Há bloqueio de execução concorrente por diretório de saída.
 
 ## O que mudou da primeira versão
 
@@ -165,7 +169,7 @@ git diff --check
 
 A integração usa Chrome real, sem substituir WebDriver por fake. As falhas artificiais de DOM são injetadas somente nos testes. A CI mantém uma matriz de Python e uma etapa separada com Chrome; ausência de Chrome é falha, não teste silenciosamente ignorado.
 
-Validação local em 2026-09-02: **83 testes aprovados — 68 unitários e 15 com Chrome real**, incluindo as 245 referências, retomada e idempotência. CI remota ainda não executada; sem push.
+Validação local em 2026-09-02: **97 testes aprovados — 82 unitários e 15 com Chrome real**, incluindo as 245 referências, retomada e idempotência. CI remota ainda não executada; sem push.
 
 Veja [validação](docs/validation.md), [decisões de projeto](docs/design.md) e [segurança](docs/security.md). Esta demo não testa autenticação, painel real, latência comercial, concorrência externa ou recuperação de queda de energia. Não representa prontidão para produção.
 

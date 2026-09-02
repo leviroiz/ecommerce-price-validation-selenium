@@ -15,7 +15,7 @@ A interface foi escrita do zero. O prefixo data-demo identifica atributos própr
 - Intenção durável, revisão de estado, rejeição de save repetido e releitura pós-escrita.
 - Lado totalmente vazio, conteúdo ilegível ou estado incerto bloqueiam o corretor.
 - Estoque desconhecido não é convertido em zero.
-- CSV escapa possíveis fórmulas; relatórios e estado gerados não são versionados.
+- CSV escapa possíveis fórmulas; saídas em `/reports/` são ignoradas. Outro `--output` exige caminho explicitamente ignorado e conferência antes de versionar.
 - Interrupção de confirmação não dispara repetição automática de clique.
 
 ## Revisão pré-publicação

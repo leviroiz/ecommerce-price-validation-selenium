@@ -18,7 +18,7 @@ Uma grade é um dicionário cor|tamanho → preço. Divergência em uma célula 
 
 1. Ler estado atual, validar quatro campos e grades.
 2. Construir alvo apenas para referências aprovadas.
-3. Verificar seleção exata e valores preparados.
+3. Bloquear alvo diferente se a referência tiver intenção pendente; verificar seleção exata e valores preparados.
 4. Persistir intenção SQLite (chave SHA-256 de referência e valores esperados).
 5. Salvar via DOM; servidor fictício recusa seleção múltipla e revisão antiga.
 6. Recarregar a tela e comparar grades, preços normais, estoque e revisão.
