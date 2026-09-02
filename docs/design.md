@@ -1,29 +1,41 @@
-# Decisões de projeto
+# Decisões e limites de fidelidade
 
-## Fronteira entre o relato real e esta implementação
+## Separação dos robôs
 
-O relato fornece Python/Selenium, o problema de preços e o escopo numérico. A arquitetura, fixture, identificadores, política comercial e estratégias de auditoria/retomada deste repositório foram criados especificamente para o portfólio. Não se afirma que a automação original adotava estas mesmas escolhas.
+Conferência normal, conferência XG, cruzamento com estoque e corretor são componentes independentes. A CLI os orquestra. O corretor não transforma automaticamente um relatório de divergências em aprovação.
 
-## Referência e decisão
+O domínio recebe valores lidos do DOM, usa Decimal e compara igualdade. Identidade, quatro campos únicos e topologia de matriz são precondições, não regras comerciais.
 
-`baseline.json` representa uma referência previamente aprovada, sintética e imutável durante o lote. Não é derivada do POR possivelmente alterado. Cada canal tem preços e custo próprios. A grade esperada permite detectar cores/tamanhos ausentes, adicionais e duplicados; XG precisa existir e ter estoque para uma correção.
+## Fluxo observado versus reconstrução
 
-DE e POR precisam ser positivos e ordenados. O preço DE tem tolerância de um centavo; fora dela, o processo exige revisão. POR dentro da mesma tolerância é mantido. A origem precisa estar explicitamente marcada como desvio da API fictícia. Fora do mock, essa marcação exigiria evidência independente; nenhuma API é acessada aqui.
+O contexto descreve navegação por referência, leitura dos quatro campos, alternância atacado/varejo e correção em sete etapas. O repositório reconstrói esse fluxo com interface nova, não os detalhes internos de seleção, cálculo ou gravação do sistema observado.
 
-As regras de margem (10%) e variação (25%) são convenções demonstrativas. A margem é `(POR esperado − custo sintético) / POR esperado`. Não modela impostos, frete ou margem líquida. A exposição é `(POR esperado − POR atual) × estoque da grade` e não equivale a vendas ou perda financeira.
+Na demo, “de/por” em atacado/varejo são nomes conceituais; os alvos das grades vêm do CSV esperado. Preparar um lote significa preencher os valores absolutos dessas células. Não foi copiado um mecanismo percentual interno.
 
-## Escrita e falha
+Uma grade é um dicionário cor|tamanho → preço. Divergência em uma célula com estoque zero continua sendo divergência de preço, mas não tem impacto sobre estoque disponível naquela variante. O relatório não calcula faturamento nem perda.
 
-O executor recebe uma interface pequena (`keys`, `read`, `write`, `refresh`), implementada pelo adapter Selenium e por fakes de testes. A igualdade imutável verifica todos os campos coletados antes da correção. Registra-se uma intenção com flush/fsync antes de tocar no preço. Uma falha impede a continuação do lote; bloqueios de negócio são registrados e permitem analisar as próximas ofertas.
+## Integridade e retomada
 
-O alvo é escrito por interação DOM. Ler o campo de entrada não basta: o adapter aguarda o valor salvo e o executor recarrega a página antes de comparar o estado observado com o esperado. O mock persiste somente o POR, mantendo os demais campos.
+1. Ler estado atual, validar quatro campos e grades.
+2. Construir alvo apenas para referências aprovadas.
+3. Verificar seleção exata e valores preparados.
+4. Persistir intenção SQLite (chave SHA-256 de referência e valores esperados).
+5. Salvar via DOM; servidor fictício recusa seleção múltipla e revisão antiga.
+6. Recarregar a tela e comparar grades, preços normais, estoque e revisão.
+7. Marcar a operação como verificada.
 
-## Retomada
+Interrupção antes de salvar permite tentar a intenção pendente quando o estado está intacto. Interrupção depois do save permite confirmar por releitura sem novo save. Estado diferente do antes/alvo interrompe a rotina. Não há rollback automático nem garantia de transação distribuída entre SQLite e JSON: a reconciliação explícita cobre a janela entre ambos.
 
-Uma intenção sem confirmação não determina se houve gravação. Por isso, cada nova passagem reconcilia o estado observado com a referência. Se a gravação anterior persistiu, a decisão será manter, sem nova escrita. Se não persistiu e as condições ainda forem válidas, pode corrigir. O histórico auxilia revisão humana; não é um cache de decisões.
+O bloqueio da CLI é liberado pelo sistema operacional quando o processo termina. A API Python pressupõe uso serial; múltiplos servidores editando o mesmo arquivo fora da CLI não são suportados.
 
-O JSONL é incremental, não assinado nem transacional com o mock. Um encerramento no meio da escrita do arquivo pode deixar a última linha incompleta; preserve o original e inspecione-a antes de consumir o relatório. Uma falha ao registrar confirmação depois de salvar exige reconciliação. O sistema não promete exactly-once nem imunidade a agentes externos alterando os dados entre leitura e clique.
+## Relatórios
 
-## Pequeno por escolha
+Os CSVs são snapshots com identidade referência/lado, escapam prefixos de fórmulas e usam substituição atômica. Um erro de escrita preserva o snapshot anterior. O corretor mantém o diário como fonte persistente; CSV não é controle de execução.
 
-Sem framework web, banco de dados, fila, servidor externo ou abstrações de produção. O HTML funciona por `file://`; a instalação suportada é editável no checkout, onde as fixtures estão disponíveis. A automação não injeta JavaScript para alterar preços; os testes usam scripts somente para provocar falhas e ambiguidades controladas no DOM.
+A conferência é somente leitura dos preços, mas cria os arquivos locais da demo. Reexecução refaz a conferência inteira, sem anexar duplicatas.
+
+## Ambiente
+
+HTTP local em porta efêmera, caminho aleatório por sessão, proteção de origem no save e política de conteúdo restrita. Essas proteções não transformam o servidor didático em serviço de produção. A origem do navegador é local; o download do driver pode depender de conexão.
+
+Fixture esperada e catálogo compartilham uma base sintética, com divergências injetadas em arquivo separado. Isso facilita reprodução e testes; não simula fontes independentes de produção.

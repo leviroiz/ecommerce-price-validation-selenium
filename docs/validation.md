@@ -1,41 +1,42 @@
-# Evidência de validação local
+# Validação da reconstrução
 
-Data: 2026-09-02. Ambiente: Windows, Python 3.14.7, Selenium 4.47.0, pytest 8.4.2 e Google Chrome em modo headless. Todos os dados de catálogo são sintéticos.
+## Escopo
 
-## Resultado
+Testes unitários para preços, estados de leitura, matriz XG, estoque por variante, aprovação, diário e relatórios; testes de integração com Chrome real contra o painel HTTP local.
 
-- 38 testes aprovados: 35 casos sem navegador e 3 integrações com Chrome real.
-- Integração DOM: simular, corrigir varejo/atacado, recarregar, reconciliar sem novas correções, preservar itens bloqueados e tolerância de um centavo.
-- Integração de falhas: catálogo duplicado, navegação fora da fixture e botão de salvar desabilitado com timeout auditado.
-- Fakes: interrupção depois da gravação, persistência que falha, mudança antes da escrita, falha de auditoria e trava concorrente.
-- Regras: limites monetários e comerciais, dados inválidos, grade XG, cores, duplicatas, estoque e origem incerta.
+A suíte antiga foi substituída: sua contagem não é somada à nova.
 
-Execução completa:
+## Casos cobertos
 
-```text
-python -m pytest -q -p no:cacheprovider --basetemp <pasta-temporaria-exclusiva> --tb=short
-38 passed
-```
+- 245 referências sintéticas na conferência normal.
+- 245 referências e dois lados XG: 490 linhas.
+- Matriz parcial, vazia, inválida, com célula duplicada ou ausente.
+- Estoque na variante divergente, estoque somente em outra variante e estoque desconhecido.
+- Simulação sem escrita, correção de duas referências aprovadas, preservação das demais.
+- Nova execução sem save duplicado.
+- Reinício do navegador e do servidor com mesmo estado persistente.
+- Interrupção antes/depois do save; reconciliação de intenção pendente.
+- Interrupção após save real via Chrome.
+- Seleção vazia, múltipla, identidade incorreta, alvo adulterado e botão indisponível.
+- Estado obsoleto recusado pelo servidor e erro na releitura pós-escrita.
+- Relatórios sem append duplicado, escape de fórmula e bloqueio concorrente.
 
-O ambiente de execução exigiu acesso autorizado à rede para instalar dependências/adquirir o driver e uma pasta temporária exclusiva devido a permissões do Windows. Essas restrições iniciais de ambiente foram resolvidas; nenhum teste foi pulado para obter o resultado.
+## Não executado / fora de escopo
 
-## Comandos do README executados
+A CI remota só pode ser confirmada após futura publicação autorizada. Painel comercial, autenticação, contas reais, importação de planilha interna, transações concorrentes externas e queda de energia não foram testados. A simulação de interrupção injeta exceções em pontos definidos; não equivale a todos os cenários possíveis de encerramento abrupto.
 
-```text
-price-demo
-{"mode": "dry_run", "results": ["correct", "correct", "unchanged", "blocked", "blocked", "blocked"]}
+## Resultado local
 
-price-demo --apply --repeat
-{"mode": "apply", "results": ["correct", "correct", "unchanged", "blocked", "blocked", "blocked"]}
-{"mode": "apply", "results": ["unchanged", "unchanged", "unchanged", "blocked", "blocked", "blocked"]}
-```
+Validação em 2026-09-02: **83 testes aprovados, nenhum ignorado** — 68 unitários e 15 de integração com Chrome real. Rodada final completa: 486,71 segundos.
 
-O relatório JSONL foi gerado localmente e excluído do versionamento. O catálogo foi reiniciado em cada novo processo do navegador; a segunda passagem acima usou a mesma sessão.
+Ambiente: Windows, Python 3.14.7, Selenium 4.47.0, pytest 8.4.2 e Chrome 152.0.7977.65. As dependências existentes foram reaproveitadas; o código testado foi carregado da nova árvore src. Uma rodada anterior de 80 testes também passou; três verificações adicionais foram incluídas antes da rodada final.
 
-## Estado da publicação
+A inicialização encontrou restrições de rede do gerenciador de driver e permissões do diretório temporário padrão. A execução foi repetida com acesso autorizado ao Chrome e diretório temporário exclusivo. Nenhum teste foi desabilitado para obter aprovação.
 
-O repositório público foi criado vazio. O código e os commits permanecem locais, aguardando autorização explícita de push. O workflow está preparado, mas **não foi executado no GitHub**. Python 3.11–3.13 e Linux ainda dependem dessa execução de CI; os testes locais foram em Python 3.14 no Windows.
+Os comandos da CLI foram exercitados por python -m price_demo.cli: all com 12 referências em simulação, correct --apply e uma segunda execução de correct --apply no mesmo diretório. Resultado: duas correções na primeira aplicação; ambas JA_CORRETO na segunda. As revisões persistidas de DEMO-002 e DEMO-007 permaneceram em 1, confirmando ausência de novos saves.
 
-## Limites da evidência
+O ensaio gerou 12 linhas normais, 24 linhas XG, quatro referências no cruzamento de estoque e duas linhas de correção, além do diário persistente. Relatórios de execução permanecem locais e ignorados pelo Git.
 
-Não houve validação em loja real, API externa, backend transacional, campanha, implantação ou execução com as 245/101/193 referências citadas como contexto. A retomada entre processos é testada com fake que preserva o estado; o mock HTML demonstra persistência apenas na sessão do navegador.
+git diff --check e git diff --cached --check: sem problemas. A revisão de conteúdo e histórico não encontrou termos privados, caminhos pessoais, referências comerciais, credenciais ou anexos indevidos. O histórico anterior contém apenas links públicos de documentação técnica; o código novo utiliza somente a origem HTTP local.
+
+CI preservada, mas não executada no GitHub. A matriz Linux/Python 3.11–3.14 permanece pendente da futura publicação autorizada. Nenhum push foi realizado.
