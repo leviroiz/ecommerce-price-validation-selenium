@@ -174,21 +174,13 @@ price-demo correct --apply
 
 ## 🖥️ Execution Preview
 
-Below are example terminal screenshots from the reconstructed workflow.
-
-### Regular Price Validation
-
 <p align="center">
-  <img src="docs/images/regular-price-validation-terminal.png" alt="Terminal output showing regular price validation workflow" width="900">
+  <img src="docs/images/execution-preview.png" alt="Sanitized execution preview of the price validation and variant correction workflows" width="1000">
 </p>
 
-This execution shows the validation of **245 product references**, including:
+The preview above shows a sanitized representation of the reconstructed workflows, including regular price validation and the step-by-step variant correction process.
 
-- **143 matching references**
-- **101 divergent references**
-- **1 read error**
-
-The workflow compares observed values against expected pricing data and generates an auditable report at the end of the execution.
+All product references, paths, interface elements, and execution data shown in the public demo are synthetic or anonymized.
 
 ### Variant Correction Workflow
 
