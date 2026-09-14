@@ -182,31 +182,6 @@ The preview above shows a sanitized representation of the reconstructed workflow
 
 All product references, paths, interface elements, and execution data shown in the public demo are synthetic or anonymized.
 
-### Variant Correction Workflow
-
-<p align="center">
-  <img src="docs/images/variant-correction-terminal.png" alt="Terminal output showing variant correction workflow" width="900">
-</p>
-
-This execution shows the correction flow applied to product variant matrices.
-
-Each correction follows a structured **7-step validation and update process**:
-
-1. open product management
-2. select pricing
-3. locate and select the product reference
-4. validate the expected price fields
-5. open batch price update
-6. verify the selected target and prepare values
-7. save and confirm the correction
-
-The observed workflow processed up to **192 variant matrices** in a single execution.
-
-> [!NOTE]
-> The screenshots are provided as operational context.
->
-> The public repository contains a sanitized reconstruction and does not expose production source code, private interfaces, credentials, or proprietary data.
-
 ---
 
 ## 🧪 Testing
