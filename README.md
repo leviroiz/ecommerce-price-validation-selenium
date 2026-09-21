@@ -1,44 +1,22 @@
-<div align="center">
-
 # E-commerce Price Validation & Correction Automation
 
-**Python + Selenium automation for price validation, product variant analysis, stock-aware divergence detection, and safe selective correction.**
+A public reconstruction of an automation built around a real e-commerce pricing workflow.
+
+The difficult part was not simply reading prices from a browser. The workflow had to decide when a divergence was actually actionable across **color × size variants**, variant-level stock availability and partially completed executions — while avoiding unsafe or repeated writes.
+
+This repository recreates those engineering problems with synthetic data and a local demo environment.
 
 <p>
-  <img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.11+">
-  <img src="https://img.shields.io/badge/Selenium-Automation-43B02A?style=for-the-badge&logo=selenium&logoColor=white" alt="Selenium">
-  <img src="https://img.shields.io/badge/Pytest-97_Tests-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white" alt="Pytest">
-  <img src="https://img.shields.io/badge/Portfolio-Sanitized-1F6FEB?style=for-the-badge" alt="Sanitized Portfolio Project">
+  <img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.11+">
+  <img src="https://img.shields.io/badge/Selenium-Automation-43B02A?style=flat-square&logo=selenium&logoColor=white" alt="Selenium">
+  <img src="https://img.shields.io/badge/Pytest-97_tests-0A9EDC?style=flat-square&logo=pytest&logoColor=white" alt="Pytest">
 </p>
 
-</div>
-
 ---
 
-## 🚀 Overview
+## Context
 
-This project reconstructs a real-world e-commerce automation workflow designed to validate pricing data, analyze product variants, detect stock-aware divergences, and apply safe selective corrections.
-
-### What it does
-
-- validates expected vs. displayed prices
-- analyzes **color × size** product variants
-- cross-checks pricing divergences with stock availability
-- applies corrections only when safety conditions are satisfied
-- revalidates saved values after updates
-- supports safe interruption and resumption
-- generates auditable reports
-
-> [!IMPORTANT]
-> **This repository does not contain production code.**
->
-> Product data, interface elements, selectors, scenarios, and demo assets were created from scratch for portfolio purposes.
-
----
-
-## 📊 Real-World Context
-
-The project is based on a real operational workflow used in e-commerce pricing validation.
+The original workflow was used to validate pricing information in an e-commerce operation.
 
 | Workflow | Observed scale |
 |---|---:|
@@ -48,47 +26,48 @@ The project is based on a real operational workflow used in e-commerce pricing v
 | Variant correction workflow | **192 matrices** |
 | Divergence × stock analysis | **20 divergences** |
 
+These figures come from separate execution snapshots and are included only to show the scale of the original problem. They are not demo results or success-rate claims.
+
 > [!NOTE]
-> These figures come from separate real-world execution snapshots and are presented only as context. They are not demo results or success-rate claims.
+> This is a sanitized public reconstruction. It does not contain production source code, company data, credentials, private endpoints, original selectors or proprietary business rules.
 
 ---
 
-## ✨ Key Features
+## What made this tricky
 
-### 🔎 Price Validation
+### Variant-level validation
 
-- Compares expected and displayed prices
-- Preserves observed and expected values for auditability
-- Detects missing, unreadable, or incomplete fields
+A product reference can contain multiple **color × size** combinations.
 
-### 🎨 Variant Matrix Analysis
+Each variant needs to be evaluated independently so that a valid value in one cell cannot hide a divergence in another.
 
-- Reads **color × size** combinations
-- Validates wholesale and retail values independently
-- Identifies divergent cells individually
+The workflow preserves expected and observed values separately to keep the validation auditable.
 
-### 📦 Stock-Aware Validation
+### Stock-aware decisions
 
-- Cross-checks only divergent variants against stock
-- Prevents stock from one variant from validating another
-- Separates active divergences, no-stock cases, and read errors
+A pricing divergence is not automatically actionable.
 
-### 🛡️ Safe Correction
+The automation cross-checks each divergent variant against its corresponding stock state and keeps active divergences, no-stock cases and read failures as different states.
 
-- Processes only explicitly approved references
-- Validates targets before write operations
-- Reopens and verifies values after saving
-- Stops on uncertain state instead of retrying blindly
+Stock from one variation must never validate another.
 
-### 🔁 Resume & Idempotency
+### Safe corrections
 
-- Persists correction intent
-- Reconciles interrupted operations
-- Prevents repeated or conflicting writes
+Corrections are limited to explicitly approved references.
+
+Before writing, the automation validates the expected target. The correction intent is persisted before the save operation, and the resulting state is reloaded and verified afterwards.
+
+When the observed state matches neither the previous state nor the intended target, the workflow stops instead of retrying blindly.
+
+### Recovery and idempotency
+
+Long-running browser automation can be interrupted.
+
+The project persists enough execution state to reconcile interrupted operations, confirm writes that already happened and resume without repeating or conflicting with previous saves.
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```text
 Synthetic Data
@@ -112,7 +91,7 @@ Selenium Automation
     CSV Reports     SQLite Journal
 ```
 
-The codebase separates browser automation, domain rules, validation logic, correction workflows, reporting, and synthetic fixtures.
+Browser automation, domain rules, validation, correction workflows and reporting are kept separate.
 
 ```text
 src/price_demo/
@@ -129,13 +108,13 @@ tests/
 
 ---
 
-## ▶️ Running Locally
+## Running locally
 
 ### Requirements
 
 - Python **3.11+**
 - Google Chrome
-- Git
+- Git, if cloning the repository
 
 ### Setup
 
@@ -144,13 +123,13 @@ python -m venv .venv
 python -m pip install -e ".[test]"
 ```
 
-### Run the full demo
+Run the complete demo:
 
 ```bash
 price-demo all
 ```
 
-### Run individual workflows
+Or execute individual workflows:
 
 ```bash
 price-demo regular
@@ -159,34 +138,32 @@ price-demo stock
 price-demo correct
 ```
 
-### Apply approved demo corrections
+To enable approved write operations inside the local synthetic demo:
 
 ```bash
 price-demo correct --apply
 ```
 
 > [!WARNING]
-> `--apply` only enables write operations inside the **local synthetic demo**.
+> `--apply` only enables writes inside the synthetic local environment.
 >
-> The project does not accept production URLs or real credentials.
+> Production URLs and real credentials are not accepted by the project.
 
 ---
 
-## 🖥️ Execution Preview
+## Execution preview
 
 <p align="center">
-  <img src="docs/images/execution-preview.png" alt="Sanitized execution preview of the price validation and variant correction workflows" width="1000">
+  <img src="docs/images/execution-preview.png" alt="Sanitized execution preview of the price validation and correction workflows" width="1000">
 </p>
 
-The preview above shows a sanitized representation of the reconstructed workflows, including regular price validation and the step-by-step variant correction process.
-
-All product references, paths, interface elements, and execution data shown in the public demo are synthetic or anonymized.
+The preview represents the reconstructed workflows using synthetic or anonymized references, paths, interface elements and execution data.
 
 ---
 
-## 🧪 Testing
+## Tests
 
-The project includes automated validation for business rules, browser behavior, recovery, and correction safety.
+The test suite covers business rules, browser behavior, recovery and correction safety.
 
 ```bash
 python -m pytest -q
@@ -194,20 +171,24 @@ python -m pytest -m "not browser" -q
 python -m pytest -m browser -q
 ```
 
-### Current status
+Current validation:
 
 - **97 tests passing**
 - **82 unit tests**
-- **15 browser tests using real Google Chrome**
-- Validation across all **245 synthetic product references**
-- Resume and recovery scenarios
-- Idempotency checks
+- **15 integration tests using real Google Chrome**
+- validation across **245 synthetic product references**
+- resume and recovery scenarios
+- idempotency checks
+
+The browser tests run against the bundled local HTML fixture rather than an external production system.
 
 ---
 
-## 🔒 Security & Sanitization
+## Public reconstruction
 
-The public repository does **not** include:
+The repository intentionally preserves the engineering problems rather than the original operational environment.
+
+It contains no:
 
 - production source code
 - real company data
@@ -218,22 +199,18 @@ The public repository does **not** include:
 - internal screenshots
 - proprietary business rules
 
-All public demo assets and scenarios were recreated from scratch.
-
-The repository preserves only the **engineering concepts, workflow structure, safety mechanisms, and architectural decisions**.
+All public assets and scenarios were recreated for demonstration purposes.
 
 ---
 
-## 📚 Documentation
+## Documentation
 
-More detailed technical information is available in:
-
-- [🧪 Validation](docs/validation.md)
-- [🧠 Design Decisions](docs/design.md)
-- [🔒 Security](docs/security.md)
+- [Validation](docs/validation.md)
+- [Design decisions](docs/design.md)
+- [Security](docs/security.md)
 
 ---
 
-## 📄 License
+## License
 
-This project is licensed under the **MIT License**.
+Licensed under the [MIT License](LICENSE).
