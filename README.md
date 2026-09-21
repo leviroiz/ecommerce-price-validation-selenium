@@ -147,7 +147,7 @@ price-demo correct --apply
 > [!WARNING]
 > `--apply` only enables writes inside the synthetic local environment.
 >
-> Production URLs and real credentials are not accepted by the project.
+> The public demo exposes no option for remote URLs, logins or credentials.
 
 ---
 
